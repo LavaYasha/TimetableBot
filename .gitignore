@@ -1,3 +1,4 @@
 *.exe
 config/config.json
 cmd/cmd
+.idea/
