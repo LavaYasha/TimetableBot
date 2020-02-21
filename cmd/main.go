@@ -2,7 +2,7 @@ package main
 
 import (
 	config "github.com/YakovBudnikov/TimetableBot/config"
-	module "github.com/YakovBudnikov/TimetableBot/modules"
+	module "github.com/YakovBudnikov/TimetableBot/botman"
 	"log"
 )
 
