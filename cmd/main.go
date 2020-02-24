@@ -1,16 +1,24 @@
 package main
 
 import (
-	config "github.com/YakovBudnikov/TimetableBot/config"
-	module "github.com/YakovBudnikov/TimetableBot/botman"
+	"github.com/YakovBudnikov/TimetableBot/config"
+	"github.com/YakovBudnikov/TimetableBot/botman"
 	"log"
 )
 
 func main() {
-	config, err := config.GetConfig("../config/config.json")
+	mconfig, err := config.GetConfig("../config/config.json")
 	if err != nil {
 		log.Fatalln(err)
 	}
-	db,_ := module.ConnectDataBase(config.DbArgs)
-	module.StartBot(config.Token, db)
+	postgres := botman.NewPostgres()
+	err = postgres.Connect(mconfig.DbArgs)
+	if err != nil{
+		log.Fatalln(err)
+	}
+	bot := botman.NewBotman(mconfig.Token, postgres)
+	err = bot.Run()
+	if err != nil{
+		log.Fatalln(err)
+	}
 }

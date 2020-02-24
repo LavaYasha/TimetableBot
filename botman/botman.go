@@ -116,6 +116,7 @@ func (b *Botman) respond(update Update, beginningDate time.Time) error {
 	//log.Println(_exclusion)
 	now := time.Now()
 	newMessage := ""
+	var	massageArr []string
 	subtime := now.Sub(beginningDate)
 	passedTime := int(subtime.Hours() / 24.0)
 	weekNumber := (passedTime / 7) + 1
@@ -124,36 +125,40 @@ func (b *Botman) respond(update Update, beginningDate time.Time) error {
 	case "/start":
 		{
 			newMessage = "Простенький бот для расписания\n>набери \"/\" для начала работы"
+			massageArr = append(massageArr, newMessage)
 		}
 		break
 	case "Сегодня", "с", "С", "/1":
 		{
 			requaredDay := now
 			newMessage += findLesson(timeTableList, exclusion, requaredDay, beginningDate)
+			massageArr = append(massageArr, newMessage)
 		}
 		break
 	case "Завтра", "з", "З", "/2":
 		{
 			requaredDay := now.AddDate(0, 0, 1)
 			newMessage += findLesson(timeTableList, exclusion, requaredDay, beginningDate)
+			massageArr = append(massageArr, newMessage)
 		}
 		break
 	case "послезавтра", "после", "по", "п", "/3":
 		{
 			requaredDay := now.AddDate(0, 0, 2)
 			newMessage += findLesson(timeTableList, exclusion, requaredDay, beginningDate)
+			massageArr = append(massageArr, newMessage)
 		}
 		break
 	case "Неделя", "/4":
 		{
 			requaredWeek := weekNumber
-			newMessage += searchLessonToWeek(timeTableList, exclusion, requaredWeek, beginningDate)
+			massageArr = searchLessonToWeek(timeTableList, exclusion, requaredWeek, beginningDate)
 		}
 		break
 	case "/5":
 		{
 			requaredWeek := weekNumber + 1
-			newMessage += searchLessonToWeek(timeTableList, exclusion, requaredWeek, beginningDate)
+			massageArr = searchLessonToWeek(timeTableList, exclusion, requaredWeek, beginningDate)
 		}
 		break
 	default:
@@ -162,20 +167,23 @@ func (b *Botman) respond(update Update, beginningDate time.Time) error {
 		}
 		break
 	}
-	newMessage += "\n\n" + "Дата запроса: " + now.Format("2 Jan 2006 15:04:05")
-	botMessage.Text = newMessage
-	//newBotMessage := ""
-	//log.Println(now.Format("Mon Jan 02"), int(passedTime), biginingDate, now.Weekday(), weekType)
+	newMessage = "\n\n" + "Дата запроса: " + now.Format("2 Jan 2006 15:04:05")
+	massageArr = append(massageArr, newMessage)
+	for i := 0; i < len(massageArr); i++ {
+		botMessage.Text = massageArr[i]
+		//newBotMessage := ""
+		//log.Println(now.Format("Mon Jan 02"), int(passedTime), biginingDate, now.Weekday(), weekType)
 
-	buf, err := json.Marshal(botMessage)
+		buf, err := json.Marshal(botMessage)
 
-	if err != nil {
-		return err
-	}
-	_, err = http.Post(b.apiUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
+		if err != nil {
+			return err
+		}
+		_, err = http.Post(b.apiUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -229,17 +237,19 @@ func findLesson(timetableList []TimeTable, exclusion []Exclusion, requestingTime
 	return message
 }
 
-func searchLessonToWeek(timetableList []TimeTable, exclusion []Exclusion, requestingWeek int, beginingDate time.Time) (message string) {
+func searchLessonToWeek(timetableList []TimeTable, exclusion []Exclusion, requestingWeek int, beginingDate time.Time) (arrmessage []string) {
+	message := ""
 	requestingTime := beginingDate.AddDate(0, 0, 7*(requestingWeek-1))
 	for i := 0; i < 7; i++ {
-		message += findLesson(timetableList, exclusion, requestingTime, beginingDate)
+		message = findLesson(timetableList, exclusion, requestingTime, beginingDate)
 		if i != 6 {
 			message += "\n\n"
 		}
+		arrmessage = append(arrmessage, message)
 		requestingTime = requestingTime.AddDate(0, 0, 1)
 	}
 
-	return message
+	return arrmessage
 }
 
 func sort(list []TimeTable) {
